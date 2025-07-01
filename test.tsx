@@ -94,6 +94,15 @@ const Order = () => {
               <option>Example Burger</option>
               <option>Example Sushi</option>
             </select>
+            <select>
+              <option>Example Fries</option>
+              <option>Example Onion Rings</option>
+            </select>
+            <select>
+              <option>Example Soda</option>
+              <option>Example Water</option>
+              <option>Example Lemonade</option>
+            </select>
             <label>Special Instructions:</label>
             <textarea rows={4} placeholder="Your Message"></textarea>
             <button>Send</button>
