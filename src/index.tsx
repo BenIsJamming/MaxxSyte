@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./style.css";
+import ReactDOM from 'react-dom/client';
+
 
 const NavBar = () => (
   <nav>
@@ -125,5 +127,9 @@ const App = () => (
     </Routes>
   </Router>
 );
+
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<App />);
 
 export default App;
