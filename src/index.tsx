@@ -396,6 +396,7 @@ const Order = () => {
                 <div className="modal-buttons">
                   <button>Place Order</button>
                   <button className="close" onClick={() => setShowModal(false)}>Cancel</button>
+                  <button className="favorites">add to favorites</button>
                 </div>
               </div>
             </div>
