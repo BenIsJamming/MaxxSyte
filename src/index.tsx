@@ -134,10 +134,58 @@ root.render(<App />);
 
 export default App;
 */
-import React, { useState } from "react";
+import React, { useState, createContext, useContext, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./style.css";
 import ReactDOM from 'react-dom/client';
+
+export interface FavoriteItem {
+  id: string;          // a stable key (slug or SKU)
+  name: string;
+  price: string;
+  image?: string;
+}
+
+/* ---------- context boilerplate ---------- */
+interface FavoritesCtx {
+  favorites: FavoriteItem[];
+  toggleFavorite: (item: FavoriteItem) => void;
+  isFavorite: (id: string) => boolean;
+}
+
+const Ctx = createContext<FavoritesCtx | null>(null);
+export const useFavorites = () => useContext(Ctx)!;
+
+export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [favorites, setFavs] = useState<FavoriteItem[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("maxx-favorites") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  /** add or remove */
+  const toggleFavorite = (item: FavoriteItem) =>
+    setFavs((prev) =>
+      prev.find((f) => f.id === item.id)
+        ? prev.filter((f) => f.id !== item.id)
+        : [...prev, item]
+    );
+
+  const isFavorite = (id: string) => favorites.some((f) => f.id === id);
+
+  /* persist whenever the list changes */
+  useEffect(() => {
+    localStorage.setItem("maxx-favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  return (
+    <Ctx.Provider value={{ favorites, toggleFavorite, isFavorite }}>
+      {children}
+    </Ctx.Provider>
+  );
+};
 
 const NavBar = () => (
   <nav className="navbar">
@@ -370,7 +418,11 @@ const App = () => (
   </Router>
 );
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
-root.render(<App />);
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+root.render(
+  <FavoritesProvider>
+    <App />
+  </FavoritesProvider>
+);
 
 export default App;
