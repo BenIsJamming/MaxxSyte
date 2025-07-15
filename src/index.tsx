@@ -291,22 +291,29 @@ const About = () => (
         <div className="about-content">
           <h3>Our Story: The Birth of MAXX Byte</h3>
           <p>
-            It all began on a cold February evening when a group of hungry college students 
-            realized there had to be a better way to get quality meals delivered right to campus. 
-            We founded MAXX Byte with a simple mission: to provide delicious, affordable meals 
-            to students who want convenience without compromising on quality.
+            It all began on a cold February evening. Maximilian ("Max") Bittleburg, a senior at Redstone University, sat alone in his dorm room, staring at the dim glow of his laptop screen while his stomach growled impatiently. The dining hall had closed hours earlier, campus restaurants were either overwhelmed or offline, and the food delivery apps that did exist couldn't find his building. After waiting 90 minutes for a lukewarm slice of pizza to arrive — only to discover it was delivered to the wrong dorm — Max realized something had to change.
+
+That night planted the seed for MAXX Byte, a bold, student-first food delivery solution designed specifically for the quirks, challenges, and culture of college life. Max didn't have venture capital. He didn't have a business plan or a tech team. What he had was experience — real, hungry, late-night experience — and a growing belief that college students deserved more than slow apps and cold fries.
+
+Over the next few months, Max began to map out what a campus-focused food platform could look like. He interviewed fellow students between classes. He sent surveys to residence halls. He even shadowed local delivery drivers to understand the obstacles they faced — from inaccessible dorm layouts to confusing building codes and entry systems. What he discovered was eye-opening: most commercial delivery systems were built for cities, not campuses.
+
+Students were constantly let down — deliveries were missed, prices inflated, and meals delayed. There was no optimization for academic schedules, no consideration for dietary restrictions, and no coordination with on-campus kitchens. That gap was exactly where MAXX Byte would fit.
+
+Fueled by frustration and a relentless drive to fix what wasn't working, Max began sketching out the solution alone. He spent long nights in his dorm room teaching himself how to code, scraping together fragments of tutorials and open-source snippets. There were no mentors, no teammates — just determination and an ever-growing pile of failed drafts. But eventually, line by line, a rough working version of MAXX Byte took shape. It wasn't pretty. It wasn't fast. But it was his — and it worked.
+
+Within the first month of beta testing, over 300 students signed up. Max delivered nearly 1,000 meals using a bike, an insulated backpack, and an app duct-taped together in JavaScript and sheer willpower. Word spread quickly. Local restaurants, who had struggled to break into the student market, saw a spike in orders and began reaching out to join the platform.
+
+The cracks began to show. One finals week, Max received over 400 orders in 72 hours. He worked until sunrise, crashed for two hours, and did it all again. There was no time to scale, no one to delegate to — and the student body wasn't slowing down. That's when Max made a call that would change everything: he opened MAXX Byte to other students and interns.
+
+Today, MAXX Byte proudly serves thousands of students in campuses around the world. What started as one hungry senior's frustration is now a full-scale delivery network powered by technology, empathy, and a deep love for the student experience. We deliver more than food — we deliver connection. Late-night bites before exams. Comfort meals after long days. Sushi for study groups and cookies for broken hearts.
+
+At MAXX Byte, we believe food is more than fuel — it's a way to take care of each other. And thanks to Max's vision and the students who stepped up to help carry it forward, we're honored to do exactly that.
+
+Our promise is delivery of your food, made to order, in 20 minutes. Everyone at MAXX Byte lives by that mission and we keep that promise, every day.
+
+Welcome to MAXX Byte — built by one student, scaled by many. We're glad you're here and be ready. We deliver.
           </p>
-          <p>
-            Our team understands student life because we've been there. Late-night study sessions, 
-            tight budgets, and the constant search for good food that doesn't break the bank. 
-            That's why we've partnered with local restaurants and chefs to bring you the best 
-            campus dining experience possible.
-          </p>
-          <p>
-            Today, MAXX Byte serves hundreds of students across campus, and we're just getting started. 
-            We're committed to growing our menu, improving our service, and making sure every student 
-            has access to great food when they need it most.
-          </p>
+          
         </div>
       </div>
     </div>
