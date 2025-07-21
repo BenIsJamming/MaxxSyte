@@ -3,6 +3,39 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./style.css";
 import ReactDOM from 'react-dom/client';
 
+
+import axios from 'axios';
+
+async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
+
+  const addressInput = document.getElementById("address") as HTMLInputElement;
+  const addressValue: string= addressInput.value;
+
+  const encodedAddress = encodeURIComponent(addressValue);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'anonymous-demo-app', // Required by Nominatim usage policy
+      },
+    });
+
+    if (response.data.length === 0) {
+      throw new Error('No results found for that address.');
+    }
+
+    const result = response.data[0];
+    return {
+      lat: parseFloat(result.lat),
+      lon: parseFloat(result.lon),
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to fetch coordinates: ${error.message}`);
+  }
+}
+
+
 export interface FavoriteItem {
   id: string;          // a stable key (slug or SKU)
   name: string;
@@ -220,6 +253,9 @@ const Contact = () => {
   );
 };
 
+
+
+
 const Order = () => {
   const [showModal, setShowModal] = useState(true);
   return (
@@ -242,7 +278,13 @@ const Order = () => {
                 <label>Phone Number</label>
                 <input type="tel" placeholder="(555) 123-4567" />
                 <label>Delivery Address</label>
-                <input type="text" placeholder="Dorm name and room number" />
+                <input type="text" id = "address" placeholder="Dorm name and room number" />
+
+                
+
+
+
+
                 <label>Main Dish</label>
                 <select>
                   <option>Campus Classic Burger - $6.99</option>
@@ -265,7 +307,7 @@ const Order = () => {
                 <label>Special Instructions</label>
                 <textarea rows={3} placeholder="Any special requests or dietary restrictions?"></textarea>
                 <div className="modal-buttons">
-                  <button>Place Order</button>
+                  <button onClick = {getCoordinatesFromAddress()}>Place Order</button>
                   <button className="close" onClick={() => setShowModal(false)}>Cancel</button>
                   <button className="favorites">add to favorites</button>
                 </div>
@@ -277,6 +319,10 @@ const Order = () => {
     </div>
   );
 };
+
+getCoordinatesFromAddress()
+  .then(coords => console.log(`Latitude: ${coords.lat}, Longitude: ${coords.lon}`))
+  .catch(err => console.error(err));
 
 const App = () => (
   <Router>
