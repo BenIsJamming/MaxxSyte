@@ -307,7 +307,14 @@ const Order = () => {
                 <label>Special Instructions</label>
                 <textarea rows={3} placeholder="Any special requests or dietary restrictions?"></textarea>
                 <div className="modal-buttons">
-                  <button onClick = {getCoordinatesFromAddress()}>Place Order</button>
+                <button onClick={() => {
+                  getCoordinatesFromAddress()
+                    .then(coords => console.log(`Latitude: ${coords.lat}, Longitude: ${coords.lon}`))
+                    .catch(err => console.error(err));
+                }}>
+                  Place Order
+                </button>
+
                   <button className="close" onClick={() => setShowModal(false)}>Cancel</button>
                   <button className="favorites">add to favorites</button>
                 </div>
@@ -320,9 +327,7 @@ const Order = () => {
   );
 };
 
-getCoordinatesFromAddress()
-  .then(coords => console.log(`Latitude: ${coords.lat}, Longitude: ${coords.lon}`))
-  .catch(err => console.error(err));
+
 
 const App = () => (
   <Router>
