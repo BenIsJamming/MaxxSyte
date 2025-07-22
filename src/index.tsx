@@ -4,8 +4,6 @@ import "./style.css";
 import ReactDOM from 'react-dom/client';
 
 
-import axios from 'axios';
-
 async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
   const addressInput = document.getElementById("address") as HTMLInputElement;
   const addressValue: string = addressInput.value;
