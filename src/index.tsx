@@ -6,11 +6,6 @@ import ReactDOM from 'react-dom/client';
 
 import axios from 'axios';
 
-type NominatimResponse = {
-  lat: string;
-  lon: string;
-};
-
 async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
   const addressInput = document.getElementById("address") as HTMLInputElement;
   const addressValue: string = addressInput.value;
@@ -19,18 +14,25 @@ async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}`;
 
   try {
-    const response = await axios.get<NominatimResponse[]>(url, {
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'User-Agent': 'anonymous-demo-app',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
     });
 
-    if (response.data.length === 0) {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.length === 0) {
       throw new Error('No results found for that address.');
     }
 
-    const result = response.data[0];
-
+    const result = data[0];
     return {
       lat: parseFloat(result.lat),
       lon: parseFloat(result.lon),
@@ -39,7 +41,6 @@ async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }
     throw new Error(`Failed to fetch coordinates: ${error.message}`);
   }
 }
-
 
 export interface FavoriteItem {
   id: string;          // a stable key (slug or SKU)
