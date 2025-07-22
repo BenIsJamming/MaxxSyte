@@ -6,18 +6,22 @@ import ReactDOM from 'react-dom/client';
 
 import axios from 'axios';
 
-async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
+type NominatimResponse = {
+  lat: string;
+  lon: string;
+};
 
+async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
   const addressInput = document.getElementById("address") as HTMLInputElement;
-  const addressValue: string= addressInput.value;
+  const addressValue: string = addressInput.value;
 
   const encodedAddress = encodeURIComponent(addressValue);
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}`;
 
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get<NominatimResponse[]>(url, {
       headers: {
-        'User-Agent': 'anonymous-demo-app', // Required by Nominatim usage policy
+        'User-Agent': 'anonymous-demo-app',
       },
     });
 
@@ -26,6 +30,7 @@ async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }
     }
 
     const result = response.data[0];
+
     return {
       lat: parseFloat(result.lat),
       lon: parseFloat(result.lon),
