@@ -261,7 +261,37 @@ const Contact = () => {
 
 
 const Order = () => {
+  const [addressQuery, setAddressQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<{ display_name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(true);
+  const fetchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch suggestions");
+      const data = await response.json();
+      setSuggestions(data.slice(0, 5)); // show max 5 suggestions
+    } catch (err) {
+      console.error(err);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div>
       <NavBar />
@@ -282,7 +312,36 @@ const Order = () => {
                 <label>Phone Number</label>
                 <input type="tel" placeholder="(555) 123-4567" />
                 <label>Delivery Address</label>
-                <input type="text" id = "address" placeholder="Dorm name and room number" />
+                <input
+                  type="text"
+                  id="address"
+                  value={addressQuery}
+                  placeholder="Dorm name and room number"
+                  onChange={(e) => {
+                    setAddressQuery(e.target.value);
+                    fetchSuggestions(e.target.value);
+                  }}
+                  autoComplete="off"
+                />
+                {loading && <div>Loading…</div>}
+
+                {suggestions.length > 0 && (
+                  <ul className="suggestions">
+                    {suggestions.map((s, idx) => (
+                      <li
+                        key={idx}
+                        onClick={() => {
+                          setAddressQuery(s.display_name);
+                          setSuggestions([]);
+                        }}
+                      >
+                        {s.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+
 
                 
 
