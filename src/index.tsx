@@ -408,7 +408,7 @@ const Order = () => {
 
 const Progress = () => {
   const location = useLocation();
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [setSocket] = useState<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState('Disconnected');
   const [serverImage, setServerImage] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
