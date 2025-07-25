@@ -1,8 +1,8 @@
-import React, { useState, createContext, useContext, useEffect } from "react";
+import React, { useState, createContext, useContext, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import "./style.css";
 import ReactDOM from 'react-dom/client';
-
+import { useNavigate, useLocation } from "react-router-dom";
 
 async function getCoordinatesFromAddress(): Promise<{ lat: number; lon: number }> {
   const addressInput = document.getElementById("address") as HTMLInputElement;
@@ -265,6 +265,8 @@ const Order = () => {
   const [suggestions, setSuggestions] = useState<{ display_name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(true);
+  const navigate = useNavigate();
+
   const fetchSuggestions = async (query: string) => {
     if (!query.trim()) {
       setSuggestions([]);
@@ -283,12 +285,38 @@ const Order = () => {
       );
       if (!response.ok) throw new Error("Failed to fetch suggestions");
       const data = await response.json();
-      setSuggestions(data.slice(0, 5)); // show max 5 suggestions
+      setSuggestions(data.slice(0, 5));
     } catch (err) {
       console.error(err);
       setSuggestions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    try {
+      const tempInput = document.createElement('input');
+      tempInput.id = 'address';
+      tempInput.value = addressQuery;
+      document.body.appendChild(tempInput);
+      
+      const coords = await getCoordinatesFromAddress();
+      
+      document.body.removeChild(tempInput);
+      
+      console.log(`Coordinates: ${coords.lat}, ${coords.lon}`);
+      
+      //redirect to progress page, carry the coordinates over
+      navigate('/progress', { 
+        state: { 
+          coordinates: coords,
+          address: addressQuery
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Failed to get coordinates for the address. Please try again.');
     }
   };
   
@@ -341,13 +369,6 @@ const Order = () => {
                   </ul>
                 )}
 
-
-
-                
-
-
-
-
                 <label>Main Dish</label>
                 <select>
                   <option>Campus Classic Burger - $6.99</option>
@@ -370,14 +391,9 @@ const Order = () => {
                 <label>Special Instructions</label>
                 <textarea rows={3} placeholder="Any special requests or dietary restrictions?"></textarea>
                 <div className="modal-buttons">
-                <button onClick={() => {
-                  getCoordinatesFromAddress()
-                    .then(coords => console.log(`Latitude: ${coords.lat}, Longitude: ${coords.lon}`))
-                    .catch(err => console.error(err));
-                }}>
-                  Place Order
-                </button>
-
+                  <button onClick={handlePlaceOrder}>
+                    Place Order
+                  </button>
                   <button className="close" onClick={() => setShowModal(false)}>Cancel</button>
                   <button className="favorites">add to favorites</button>
                 </div>
@@ -390,8 +406,186 @@ const Order = () => {
   );
 };
 
+const Progress = () => {
+  const location = useLocation();
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+  const [serverImage, setServerImage] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logRef = useRef<string[]>([]);
 
+  const { coordinates, address } = location.state || {};
 
+  const addLog = (message: string) => {
+    logRef.current = [...logRef.current, `${new Date().toLocaleTimeString()}: ${message}`];
+    setLogs([...logRef.current]);
+  };
+
+  useEffect(() => {
+    if (!coordinates) {
+      addLog('No coordinates provided');
+      return;
+    }
+
+    addLog(`Connecting to delivery tracking server...`);
+    addLog(`Delivery address: ${address}`);
+    addLog(`Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lon.toFixed(6)}`);
+
+    // Connect to WebSocket server
+    const ws = new WebSocket("ws://127.0.0.1:7890");
+    ws.binaryType = "arraybuffer";
+
+    ws.onopen = () => {
+      setConnectionStatus('Connected');
+      addLog('Connected to tracking server');
+      setSocket(ws);
+      
+      //send coordinates automatically when connected
+      //Formatted as "start_lon start_lat end_lon end_lat"
+      // Using a default restaurant location and the delivery address
+      const restaurantLon = -77.540881; // Default restaurant location
+      const restaurantLat = 37.574900;
+      const message = `${restaurantLon.toFixed(6)} ${restaurantLat.toFixed(6)} ${coordinates.lon.toFixed(6)} ${coordinates.lat.toFixed(6)}`;
+      ws.send(message);
+      addLog(`Sent route request: ${message}`);
+    };
+
+    ws.onmessage = (e) => {
+      addLog('Received response from server');
+      if (typeof e.data === 'string') {
+        addLog(`Server message: ${e.data}`);
+      } else {
+        // Handle binary data (image)
+        const blob = new Blob([e.data], { type: "image/png" });
+        const url = URL.createObjectURL(blob);
+        setServerImage(url);
+        addLog('Route map received and displayed');
+      }
+    };
+
+    ws.onerror = () => {
+      setConnectionStatus('Error');
+      addLog('WebSocket connection error');
+    };
+
+    ws.onclose = () => {
+      setConnectionStatus('Disconnected');
+      addLog('Connection to server closed');
+    };
+
+    setSocket(ws);
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [coordinates, address]);
+
+  if (!coordinates) {
+    return (
+      <div>
+        <NavBar />
+        <div className="page-container">
+          <div className="page-header">
+            <h1>Order Progress</h1>
+            <p>No order information found</p>
+          </div>
+          <div className="container">
+            <p>Please place an order first.</p>
+            <Link to="/order">Go to Order Page</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <NavBar />
+      <div className="page-container">
+        <div className="page-header">
+          <h1>Order Progress 🔥🔥</h1>
+          <p>Tracking your delivery in real-time</p>
+        </div>
+        <div className="container">
+          <div style={{ marginBottom: '2rem' }}>
+            <h3>Delivery Information</h3>
+            <p><strong>Address:</strong> {address}</p>
+            <p><strong>Coordinates:</strong> {coordinates.lat.toFixed(6)}, {coordinates.lon.toFixed(6)}</p>
+            <p><strong>Connection Status:</strong> 
+              <span style={{ 
+                color: connectionStatus === 'Connected' ? '#27ae60' : connectionStatus === 'Error' ? '#e74c3c' : '#f39c12',
+                fontWeight: 'bold',
+                marginLeft: '10px'
+              }}>
+                {connectionStatus}
+              </span>
+            </p>
+          </div>
+
+          {serverImage && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3>Delivery Route Map</h3>
+              <img 
+                src={serverImage} 
+                alt="Server generated route map" 
+                style={{ 
+                  maxWidth: '100%', 
+                  border: '2px solid #333', 
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                }} 
+              />
+            </div>
+          )}
+
+          <div>
+            <h3>Activity Log</h3>
+            <div style={{ 
+              backgroundColor: '#f8f9fa', 
+              padding: '1rem', 
+              borderRadius: '4px', 
+              fontFamily: 'monospace',
+              fontSize: '0.9rem',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              border: '1px solid #dee2e6'
+            }}>
+              {logs.map((log, index) => (
+                <div key={index} style={{ marginBottom: '0.5rem' }}>
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2rem' }}>
+            <Link to="/order" style={{ 
+              backgroundColor: '#3498db', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              textDecoration: 'none', 
+              borderRadius: '4px',
+              marginRight: '1rem'
+            }}>
+              Place Another Order
+            </Link>
+            <Link to="/" style={{ 
+              backgroundColor: '#95a5a6', 
+              color: 'white', 
+              padding: '0.5rem 1rem', 
+              textDecoration: 'none', 
+              borderRadius: '4px'
+            }}>
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 const App = () => (
   <Router>
     <Routes>
@@ -400,6 +594,7 @@ const App = () => (
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/order" element={<Order />} />
+      <Route path="/progress" element={<Progress />} />
     </Routes>
   </Router>
 );
