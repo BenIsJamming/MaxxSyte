@@ -405,10 +405,8 @@ const Order = () => {
     </div>
   );
 };
-
 const Progress = () => {
   const location = useLocation();
-  const [setSocket] = useState<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState('Disconnected');
   const [serverImage, setServerImage] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
@@ -438,7 +436,6 @@ const Progress = () => {
     ws.onopen = () => {
       setConnectionStatus('Connected');
       addLog('Connected to tracking server');
-      setSocket(ws);
       
       //send coordinates automatically when connected
       //Formatted as "start_lon start_lat end_lon end_lat"
@@ -473,14 +470,12 @@ const Progress = () => {
       addLog('Connection to server closed');
     };
 
-    setSocket(ws);
-
     return () => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
     };
-  }, [coordinates, address]);
+  }, [coordinates, address]); // Removed setSocket from dependency array since it's stable
 
   if (!coordinates) {
     return (
@@ -505,8 +500,8 @@ const Progress = () => {
       <NavBar />
       <div className="page-container">
         <div className="page-header">
-          <h1>Order Progress 🔥🔥</h1>
-          <p>Tracking your delivery in real-time</p>
+          <h1>Order Progress</h1>
+          <p>Track your delivery</p>
         </div>
         <div className="container">
           <div style={{ marginBottom: '2rem' }}>
@@ -539,6 +534,7 @@ const Progress = () => {
               />
             </div>
           )}
+
 
           <div>
             <h3>Activity Log</h3>
