@@ -410,6 +410,9 @@ const Progress = () => {
   const [connectionStatus, setConnectionStatus] = useState('Disconnected');
   const [serverImage, setServerImage] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const [showNotification, setShowNotification] = useState(false);
+  const [currentNotification, setCurrentNotification] = useState('');
   const logRef = useRef<string[]>([]);
 
   const { coordinates, address } = location.state || {};
@@ -417,6 +420,17 @@ const Progress = () => {
   const addLog = (message: string) => {
     logRef.current = [...logRef.current, `${new Date().toLocaleTimeString()}: ${message}`];
     setLogs([...logRef.current]);
+  };
+
+  const showNotificationAlert = (message: string) => {
+    setCurrentNotification(message);
+    setShowNotification(true);
+    setNotifications(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    
+    // Auto-hide notification after 10 seconds
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 10000);
   };
 
   useEffect(() => {
@@ -448,11 +462,31 @@ const Progress = () => {
     };
 
     ws.onmessage = (e) => {
-      addLog('Received response from server');
       if (typeof e.data === 'string') {
-        addLog(`Server message: ${e.data}`);
+        try {
+          //try to parse as JSON notification
+          const parsedMessage = JSON.parse(e.data);
+          if (parsedMessage.type === 'notification') {
+            addLog(`Notification received: ${parsedMessage.message}`);
+            showNotificationAlert(parsedMessage.message);
+            
+            //send acknowledgment back to server
+            ws.send(JSON.stringify({
+              type: 'notification_ack',
+              message: parsedMessage.message,
+              timestamp: Date.now()
+            }));
+          } else {
+            //Handle other JSON messages
+            addLog(`Server JSON: ${e.data}`);
+          }
+        } catch (error) {
+          //Not JSON, handle as regular string message
+          addLog(`Server message: ${e.data}`);
+        }
       } else {
-        // Handle binary data (image)
+        //Handle binary image data
+        addLog('Received image data from server');
         const blob = new Blob([e.data], { type: "image/png" });
         const url = URL.createObjectURL(blob);
         setServerImage(url);
@@ -475,7 +509,7 @@ const Progress = () => {
         ws.close();
       }
     };
-  }, [coordinates, address]); // Removed setSocket from dependency array since it's stable
+  }, [coordinates, address]);
 
   if (!coordinates) {
     return (
@@ -498,6 +532,42 @@ const Progress = () => {
   return (
     <div>
       <NavBar />
+      
+      {/*notification popup*/}
+      {showNotification && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          backgroundColor: '#e74c3c',
+          color: 'white',
+          padding: '1rem',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+          maxWidth: '400px',
+          fontSize: '1.1rem',
+          fontWeight: 'bold'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>{currentNotification}</div>
+            <button 
+              onClick={() => setShowNotification(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                marginLeft: '10px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="page-container">
         <div className="page-header">
           <h1>Order Progress</h1>
@@ -519,6 +589,33 @@ const Progress = () => {
             </p>
           </div>
 
+          {/*notifications*/}
+          {notifications.length > 0 && (
+            <div style={{ marginBottom: '2rem' }}>
+              <h3>🔔 Delivery Notifications</h3>
+              <div style={{ 
+                backgroundColor: '#fff3cd', 
+                border: '1px solid #ffeaa7',
+                padding: '1rem', 
+                borderRadius: '4px',
+                maxHeight: '150px',
+                overflowY: 'auto'
+              }}>
+                {notifications.map((notification, index) => (
+                  <div key={index} style={{ 
+                    marginBottom: '0.5rem',
+                    padding: '0.5rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem'
+                  }}>
+                    {notification}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {serverImage && (
             <div style={{ marginBottom: '2rem' }}>
               <h3>Delivery Route Map</h3>
@@ -534,7 +631,6 @@ const Progress = () => {
               />
             </div>
           )}
-
 
           <div>
             <h3>Activity Log</h3>
